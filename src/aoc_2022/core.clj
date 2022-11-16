@@ -1,7 +1,8 @@
-(ns aoc-2022.core
-  (:gen-class))
+(ns aoc-2022.core)
 
-(defn -main
-  "I don't do a whole lot ... yet."
-  [& args]
-  (println "Hello, World!"))
+
+(defn test1 [input]
+  (count input))
+
+;; Ctrl+Enter to eval, should be true.
+(= 3 (test1 "asd"))
