@@ -6,3 +6,5 @@
 
 ;; Ctrl+Enter to eval, should be true.
 (= 3 (test1 "asd"))
+
+(println "asdf")
