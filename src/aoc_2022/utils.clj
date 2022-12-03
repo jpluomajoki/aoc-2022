@@ -6,5 +6,7 @@
   ([day]
    (input day {:lines? true}))
   ([day {:keys [actual? lines?]}]
-   (cond-> (slurp (str "resources/" (if actual? "actual" "test") "/day" day))
-     lines? (str/split-lines))))
+   (let [actual? (if (nil? actual?) true actual?)
+         lines? (if (nil? lines?) true lines?)]
+     (cond-> (slurp (str "resources/" (if actual? "actual" "test") "/day" day))
+       lines? (str/split-lines)))))

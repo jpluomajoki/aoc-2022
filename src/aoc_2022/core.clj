@@ -60,3 +60,29 @@
     (case part
       1 res-1
       2 res-2)))
+
+(defn day3 [actual? part]
+  (let [char-to-prio (fn [char]
+                       (let [i (int char)]
+                         (if (>= (int \Z) i)
+                           (- i 38)
+                           (- i 96))))
+        input (input 3 {:actual? actual?})]
+    (case part
+      1 (reduce #(+ %1 (let [h1 (apply str (take (/ (count %2) 2) %2))
+                             h2 (apply str (drop (/ (count %2) 2) %2))]
+                         (char-to-prio (first (for [x h1
+                                                    :when (str/includes? h2 (str x))]
+                                                x))))) 0 input)
+      2 (loop [input input
+               acc 0]
+          (if (empty? input)
+            acc
+            (recur
+             (drop 3 input)
+             (+ acc (first (let [elves (take 3 input)]
+                             (for [x (first elves)
+                                   :when (and
+                                          (str/includes? (nth elves 1) (str x))
+                                          (str/includes? (nth elves 2) (str x)))]
+                               (char-to-prio x)))))))))))
