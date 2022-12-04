@@ -86,3 +86,20 @@
                                           (str/includes? (nth elves 1) (str x))
                                           (str/includes? (nth elves 2) (str x)))]
                                (char-to-prio x)))))))))))
+
+(defn day4 [actual? part]
+  (let [input (input 4
+                     {:actual? actual?})
+        pairs (->> input
+               (map (fn [pair]
+                      (->> (str/split pair #",")
+                           (map #(str/split % #"-"))
+                           (map #(map read-string %))
+                           (map (fn [[start end]]
+                                  (range start (inc end))))
+                           (sort-by (comp - count))))))]
+    (case part
+      1 (count (filter (fn [pair]
+                       (= (second pair) (filter (set (first pair)) (second pair)))) pairs))
+      2 (count (filter (fn [pair]
+                         (seq (filter (set (first pair)) (second pair)))) pairs)))))
