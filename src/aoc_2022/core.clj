@@ -103,3 +103,41 @@
                        (= (second pair) (filter (set (first pair)) (second pair)))) pairs))
       2 (count (filter (fn [pair]
                          (seq (filter (set (first pair)) (second pair)))) pairs)))))
+
+(defn day5 [actual? part]
+  (let [input (input 5 {:actual? actual? :lines? false})
+        [rows moves] (mapv str/split-lines (str/split input #"\n\n"))
+        stacks (into [] (loop [stacks (repeat (Character/digit (last (str/trim (last rows))) 10) [])
+                               rows rows]
+                          (if (or (= 1 (count rows)) (empty? rows))
+                            stacks
+                            (recur
+                             (map-indexed
+                              (fn [i stack]
+                                (let [char (nth (first rows) (+ 1 (* 4 i)))]
+                                  (if (= \space char)
+                                    stack
+                                    (conj stack char))))
+                              stacks)
+                             (rest rows)))))
+        move-stacks (fn [one-by-one?]
+                      (apply str (map first (loop [stacks stacks
+                                                   moves moves]
+                                              (if (empty? moves)
+                                                stacks
+                                                (recur
+                                                 (let [move (str/split (first moves) #" ")
+                                                       amount (read-string (nth move 1))
+                                                       from (read-string (nth move 3))
+                                                       to (read-string (nth move 5))
+                                                       moved (cond-> (take amount (nth stacks (dec from)))
+                                                               one-by-one? reverse)]
+                                                   (-> stacks
+                                                       (update-in [(dec from)] (partial drop amount))
+                                                       (update-in [(dec to)] #(concat moved %))))
+                                                 (rest moves)))))))]
+    (case part
+      1 (move-stacks true)
+      2 (move-stacks false))))
+
+(day5 true 2)
