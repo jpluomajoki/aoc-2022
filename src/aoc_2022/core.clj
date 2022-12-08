@@ -140,4 +140,10 @@
       1 (move-stacks true)
       2 (move-stacks false))))
 
-(day5 true 2)
+(defn day6 [input part]
+  (let [mark-length (case part 1 4 2 14)]
+    (loop [i mark-length]
+      (if (or (= i (count input))
+              (=  mark-length (count (set (subs input (- i mark-length) i)))))
+        i
+        (recur (inc i))))))
