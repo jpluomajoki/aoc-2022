@@ -91,16 +91,16 @@
   (let [input (input 4
                      {:actual? actual?})
         pairs (->> input
-               (map (fn [pair]
-                      (->> (str/split pair #",")
-                           (map #(str/split % #"-"))
-                           (map #(map read-string %))
-                           (map (fn [[start end]]
-                                  (range start (inc end))))
-                           (sort-by (comp - count))))))]
+                   (map (fn [pair]
+                          (->> (str/split pair #",")
+                               (map #(str/split % #"-"))
+                               (map #(map read-string %))
+                               (map (fn [[start end]]
+                                      (range start (inc end))))
+                               (sort-by (comp - count))))))]
     (case part
       1 (count (filter (fn [pair]
-                       (= (second pair) (filter (set (first pair)) (second pair)))) pairs))
+                         (= (second pair) (filter (set (first pair)) (second pair)))) pairs))
       2 (count (filter (fn [pair]
                          (seq (filter (set (first pair)) (second pair)))) pairs)))))
 
@@ -149,50 +149,89 @@
         (recur (inc i))))))
 
 (defn day8 [actual? part]
-  ;; Only part 1
-  (let [input (map #(map read-string (str/split % #"")) (input 8 {:actual? actual?}))] 
-    (loop [i 0
-           input1 input
-           acc 0]
-      (if (empty? input1)
-        acc
-        (recur
-         (inc i)
-         (rest input1)
-         (let [row (first input1)]
-           (cond
-             (or (= i 0)
-                 (= 1 (count input1)))
-             (+ acc (count row))
-             :else
-             (+ acc (loop [acc 0
-                           j 0
-                           row1 row]
-                      (if (empty? row1)
-                        acc
-                        (recur
-                         (let [tree (first row1)] 
-                           (cond (or (= j 0)
-                                     (= 1 (count row1)))
-                                 (inc acc)
+  (let [input (map #(map read-string (str/split % #"")) (input 8 {:actual? actual?}))
+        get-tree-count (fn [tree
+                            trees]
+                         (loop [acc 0
+                                trees trees]
+                           (cond
+                             (nil? (first trees))
+                             acc
+                             (<= tree (first trees))
+                             (inc acc)
+                             :else
+                             (recur (inc acc) (rest trees)))))]
+    (case part
+      1
+      (loop [i 0
+             input1 input
+             acc 0]
+        (if (empty? input1)
+          acc
+          (recur
+           (inc i)
+           (rest input1)
+           (let [row (first input1)]
+             (cond
+               (or (= i 0)
+                   (= 1 (count input1)))
+               (+ acc (count row))
+               :else
+               (+ acc (loop [acc 0
+                             j 0
+                             row1 row]
+                        (if (empty? row1)
+                          acc
+                          (recur
+                           (let [tree (first row1)]
+                             (cond (or (= j 0)
+                                       (= 1 (count row1)))
+                                   (inc acc)
 
-                                 (or
+                                   (or
                                 ;up
-                                  (> tree (apply max
-                                                 (map #(nth (nth input %) j) (reverse (range 0 i)))))
+                                    (> tree (apply max
+                                                   (map #(nth (nth input %) j) (reverse (range 0 i)))))
                                 ; down
-                                  (> tree (apply max
-                                                 (map #(nth (nth input %) j) (range (inc i) (count input)))))
+                                    (> tree (apply max
+                                                   (map #(nth (nth input %) j) (range (inc i) (count input)))))
                                ; right 
-                                  (> tree (apply max 
-                                                 (map #(nth (nth input i) %) (range (inc j) (count row)))))
+                                    (> tree (apply max
+                                                   (map #(nth (nth input i) %) (range (inc j) (count row)))))
                                ; left
-                                  (> tree
-                                     (apply max
-                                            (map #(nth (nth input i) %) (reverse (range 0 j))))))
+                                    (> tree
+                                       (apply max
+                                              (map #(nth (nth input i) %) (reverse (range 0 j))))))
 
-                                 (inc acc)
-                                 :else acc))
+                                   (inc acc)
+                                   :else acc))
 
-                         (inc j)
-                         (rest row1))))))))))))
+                           (inc j)
+                           (rest row1))))))))))
+
+      2 (loop [i 0
+               j 0
+               high-score 0]
+          (let [last-i? (= i (dec (count input)))
+                last-j? (= j (dec (count (first input))))
+                tree (nth (nth input i) j)]
+            (if (and last-i?
+                     last-j?)
+              high-score
+              (recur
+               (if last-j?
+                 (inc i)
+                 i)
+               (if last-j?
+                 0
+                 (inc j))
+               (max high-score
+                    (*
+                     ;up
+                     (get-tree-count tree (map #(nth (nth input %) j) (reverse (range 0 i))))
+                     ;down
+                     (get-tree-count tree (map #(nth (nth input %) j) (range (inc i) (count input))))
+                     ;left
+                     (get-tree-count tree (map #(nth (nth input i) %) (range (inc j) (count (first input)))))
+                     ;right
+                     (get-tree-count tree (map #(nth (nth input i) %) (reverse (range 0 j)))))))))))))
