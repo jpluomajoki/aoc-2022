@@ -147,3 +147,52 @@
               (=  mark-length (count (set (subs input (- i mark-length) i)))))
         i
         (recur (inc i))))))
+
+(defn day8 [actual? part]
+  ;; Only part 1
+  (let [input (map #(map read-string (str/split % #"")) (input 8 {:actual? actual?}))] 
+    (loop [i 0
+           input1 input
+           acc 0]
+      (if (empty? input1)
+        acc
+        (recur
+         (inc i)
+         (rest input1)
+         (let [row (first input1)]
+           (cond
+             (or (= i 0)
+                 (= 1 (count input1)))
+             (+ acc (count row))
+             :else
+             (+ acc (loop [acc 0
+                           j 0
+                           row1 row]
+                      (if (empty? row1)
+                        acc
+                        (recur
+                         (let [tree (first row1)] 
+                           (cond (or (= j 0)
+                                     (= 1 (count row1)))
+                                 (inc acc)
+
+                                 (or
+                                ;up
+                                  (> tree (apply max
+                                                 (map #(nth (nth input %) j) (reverse (range 0 i)))))
+                                ; down
+                                  (> tree (apply max
+                                                 (map #(nth (nth input %) j) (range (inc i) (count input)))))
+                               ; right 
+                                  (> tree (apply max 
+                                                 (map #(nth (nth input i) %) (range (inc j) (count row)))))
+                               ; left
+                                  (> tree
+                                     (apply max
+                                            (map #(nth (nth input i) %) (reverse (range 0 j))))))
+
+                                 (inc acc)
+                                 :else acc))
+
+                         (inc j)
+                         (rest row1))))))))))))
