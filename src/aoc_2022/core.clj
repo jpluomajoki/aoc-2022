@@ -235,3 +235,36 @@
                      (get-tree-count tree (map #(nth (nth input i) %) (range (inc j) (count (first input)))))
                      ;right
                      (get-tree-count tree (map #(nth (nth input i) %) (reverse (range 0 j)))))))))))))
+
+(defn day10 [actual? part]
+  (let [input (input 10 {:actual? actual?})
+        result
+        (loop [input1 input
+               last-command "noop"
+               acc []]
+          (if (empty? input1)
+            acc
+            (recur
+             (rest input1)
+             (first input1)
+             (let [[lc lv] (last acc)
+                   [command _] (str/split (first input1) #" ")
+                   [_ cv] (str/split last-command #" ")
+                   cv (when cv (read-string cv))
+                   cycles (if (= "noop" command)
+                            1
+                            2)]
+               (apply conj acc
+                      (map (fn [c]
+                             [(+ (or lc 0) c) (+ (or lv 1) (or cv 0))]) (range 1 (inc cycles))))))))
+        pixel (fn [i sprite]
+                (if (#{(dec sprite) sprite (inc sprite)} i)
+                  "#"
+                  "."))]
+    (case part
+      1
+      (apply + (map (fn [[a b]] (* a b)) (filter (fn [[c _]] (#{20 60 100 140 180 220} c)) result)))
+      2
+      (for [row (range 0 6)]
+        (println (apply str (map (fn [i]
+                                   (pixel i (second (nth result (+ (* 40 row) i))))) (range 0 40))))))))
