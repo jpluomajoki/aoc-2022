@@ -276,15 +276,12 @@
                         (let [monkey (str/split-lines monkey)]
                           {:id (read-string (last (str/split (subs (first monkey) 0 (dec (count (first monkey)))) #" ")))
                            :inspected 0
-                           :items (map read-string
+                           :items (map #(bigint (read-string %))
                                        (-> (second monkey)
                                            (str/split #":")
                                            second
                                            (str/trim)
                                            (str/split #",")))
-                           :multiplier (let [op (str/trim (last (str/split (nth monkey 2) #"=")))
-                                             [_num1 op num2] (str/split op #" ")]
-                                         (if (= "old" num2) "old" (read-string num2)))
                            :op (let [op (str/trim (last (str/split (nth monkey 2) #"=")))
                                      [_num1 op num2] (str/split op #" ")]
                                  (fn [old]
@@ -298,13 +295,16 @@
                                     last
                                     read-string)
                            :targets (map #(read-string (last (str/split % #" "))) (take-last 2 monkey))})) monkeys)
+        cap (apply * (concat (map #(bigint (:div %)) monkeys)
+                             (flatten (map :items monkeys))))
         do-turn (fn [mi monkeys]
                   (let [monkey (nth monkeys mi)
-                        items (map (fn [n] (int (/ ((:op monkey) n) 3))) (:items monkey))
+                        items (case part
+                                1 (map (fn [n] (int (/ ((:op monkey) n) 3))) (:items monkey))
+                                2 (map #(mod ((:op monkey) %) cap) (:items monkey)))
                         monkey (assoc monkey :items '())
                         monkey (update monkey :inspected (partial + (count items)))
                         items-moved (map (fn [item] [(if (= 0 (mod item (:div monkey)))
-
                                                        (first (:targets monkey))
                                                        (second (:targets monkey))) item]) items)]
                     (loop [items items-moved
@@ -320,9 +320,4 @@
                                    (recur
                                     (rest ids)
                                     (do-turn (first ids) acc)))))]
-    
-    (apply * (take 2 (sort > (map :inspected (nth (iterate do-round monkeys) (case part 1 20 2 100))))))))
-
-(day11 false 1)
-
-;; item -> op -> divisible?
+    (apply * (take 2 (sort > (map :inspected (nth (iterate do-round monkeys) (case part 1 20 2 10000))))))))
