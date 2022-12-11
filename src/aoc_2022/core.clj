@@ -268,3 +268,61 @@
       (for [row (range 0 6)]
         (println (apply str (map (fn [i]
                                    (pixel i (second (nth result (+ (* 40 row) i))))) (range 0 40))))))))
+
+(defn day11 [actual? part]
+  (let [input (input 11 {:lines? false :actual? actual?})
+        monkeys (str/split input #"\n\n")
+        monkeys (mapv (fn [monkey]
+                        (let [monkey (str/split-lines monkey)]
+                          {:id (read-string (last (str/split (subs (first monkey) 0 (dec (count (first monkey)))) #" ")))
+                           :inspected 0
+                           :items (map read-string
+                                       (-> (second monkey)
+                                           (str/split #":")
+                                           second
+                                           (str/trim)
+                                           (str/split #",")))
+                           :multiplier (let [op (str/trim (last (str/split (nth monkey 2) #"=")))
+                                             [_num1 op num2] (str/split op #" ")]
+                                         (if (= "old" num2) "old" (read-string num2)))
+                           :op (let [op (str/trim (last (str/split (nth monkey 2) #"=")))
+                                     [_num1 op num2] (str/split op #" ")]
+                                 (fn [old]
+                                   ((case op
+                                      "*"
+                                      *
+                                      "+"
+                                      +) old (if (= "old" num2) old (read-string num2)))))
+                           :div (-> (nth monkey 3)
+                                    (str/split #" ")
+                                    last
+                                    read-string)
+                           :targets (map #(read-string (last (str/split % #" "))) (take-last 2 monkey))})) monkeys)
+        do-turn (fn [mi monkeys]
+                  (let [monkey (nth monkeys mi)
+                        items (map (fn [n] (int (/ ((:op monkey) n) 3))) (:items monkey))
+                        monkey (assoc monkey :items '())
+                        monkey (update monkey :inspected (partial + (count items)))
+                        items-moved (map (fn [item] [(if (= 0 (mod item (:div monkey)))
+
+                                                       (first (:targets monkey))
+                                                       (second (:targets monkey))) item]) items)]
+                    (loop [items items-moved
+                           monkeys (assoc-in monkeys [mi] monkey)]
+                      (if (empty? items)
+                        monkeys
+                        (recur (rest items)
+                               (update monkeys (ffirst items) (fn [monkey] (update monkey :items #(conj % (last (first items)))))))))))
+        do-round (fn [monkeys] (loop [ids (range 0 (count monkeys))
+                                      acc monkeys]
+                                 (if (empty? ids)
+                                   acc
+                                   (recur
+                                    (rest ids)
+                                    (do-turn (first ids) acc)))))]
+    
+    (apply * (take 2 (sort > (map :inspected (nth (iterate do-round monkeys) (case part 1 20 2 100))))))))
+
+(day11 false 1)
+
+;; item -> op -> divisible?
